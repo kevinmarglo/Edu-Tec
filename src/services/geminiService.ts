@@ -1,7 +1,18 @@
 import { GoogleGenAI, Type } from "@google/genai";
 import { SubjectId, Question, StudyPlan, UserPerformance } from "../types";
 
-const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+let aiClient: GoogleGenAI | null = null;
+
+function getAiClient(): GoogleGenAI {
+  if (!aiClient) {
+    const apiKey = process.env.GEMINI_API_KEY;
+    if (!apiKey || apiKey === "undefined") {
+       throw new Error("GEMINI_API_KEY is missing. Please set it in your environment variables.");
+    }
+    aiClient = new GoogleGenAI({ apiKey });
+  }
+  return aiClient;
+}
 
 const model = "gemini-3-flash-preview";
 
@@ -11,6 +22,7 @@ export async function generatePracticeQuestions(subjectId: string, count: number
   The output must be a structured JSON array.`;
 
   try {
+    const ai = getAiClient();
     const response = await ai.models.generateContent({
       model,
       contents: prompt,
@@ -58,6 +70,7 @@ export async function getTutorResponse(message: string, subjectId?: SubjectId, h
   If asked a question in Sinhala, respond in Sinhala or a mix of both if appropriate.`;
 
   try {
+    const ai = getAiClient();
     const response = await ai.models.generateContent({
       model,
       contents: [...history, { role: 'user', parts: [{ text: message }] }],
@@ -81,6 +94,7 @@ export async function generatePersonalizedStudyPlan(performances: UserPerformanc
   Provide recommendations in both English and Sinhala.`;
 
   try {
+    const ai = getAiClient();
     const response = await ai.models.generateContent({
       model,
       contents: prompt,
