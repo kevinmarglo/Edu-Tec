@@ -4,7 +4,6 @@ import App from './App.tsx';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import './index.css';
 
-console.log('Mounting LankaEducate App...');
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <ErrorBoundary>
