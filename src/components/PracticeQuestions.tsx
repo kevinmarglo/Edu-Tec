@@ -8,7 +8,8 @@ import {
   Loader2, 
   HelpCircle,
   AlertCircle,
-  Info
+  Info,
+  Sparkles
 } from 'lucide-react';
 import { Subject, Question } from '../types';
 import { generatePracticeQuestions } from '../services/geminiService';
