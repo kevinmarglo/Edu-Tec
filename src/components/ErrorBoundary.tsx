@@ -31,8 +31,8 @@ export class ErrorBoundary extends Component<Props, State> {
             <h1 className="text-3xl font-black text-indigo-950 mb-4 uppercase tracking-tighter">System Error</h1>
             <p className="text-slate-500 font-bold mb-6">
               {this.state.error?.message.includes('GEMINI_API_KEY') 
-                ? "The AI API key is missing. If you are on Netlify, please add GEMINI_API_KEY to your environment variables."
-                : "An unexpected error occurred while loading the application."}
+                ? "The Gemini AI API key is missing. If you are on Vercel/Netlify, please add GEMINI_API_KEY to your environment variables."
+                : "An unexpected error occurred while loading the application. Check your internet connection or API keys."}
             </p>
             <div className="bg-slate-100 p-4 rounded-xl mb-6 overflow-auto">
               <code className="text-xs font-mono text-red-600">{this.state.error?.toString()}</code>

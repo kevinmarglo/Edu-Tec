@@ -5,9 +5,9 @@ let aiClient: GoogleGenAI | null = null;
 
 function getAiClient(): GoogleGenAI {
   if (!aiClient) {
-    const apiKey = process.env.GEMINI_API_KEY;
+    const apiKey = process.env.GEMINI_API_KEY || (import.meta as any).env.VITE_GEMINI_API_KEY;
     if (!apiKey || apiKey === "undefined") {
-       throw new Error("GEMINI_API_KEY is missing. Please set it in your environment variables.");
+       throw new Error("GEMINI_API_KEY is missing. Please set it in your environment variables (GEMINI_API_KEY or VITE_GEMINI_API_KEY).");
     }
     aiClient = new GoogleGenAI({ apiKey });
   }
@@ -55,6 +55,7 @@ export async function generatePracticeQuestions(subjectId: string, count: number
       },
     });
 
+    if (!response.text) throw new Error("Empty response from AI");
     return JSON.parse(response.text);
   } catch (error) {
     console.error("Error generating questions:", error);
@@ -73,12 +74,13 @@ export async function getTutorResponse(message: string, subjectId?: SubjectId, h
     const ai = getAiClient();
     const response = await ai.models.generateContent({
       model,
-      contents: [...history, { role: 'user', parts: [{ text: message }] }],
+      contents: history.length > 0 ? [...history, { role: 'user', parts: [{ text: message }] }] : message,
       config: {
         systemInstruction,
       },
     });
 
+    if (!response.text) throw new Error("Empty response from AI");
     return response.text;
   } catch (error) {
     console.error("Error getting tutor response:", error);
