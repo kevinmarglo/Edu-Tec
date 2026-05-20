@@ -29,7 +29,7 @@ function getAiClient(): GoogleGenAI {
 
     // Direct fallback key as requested to ensure it always works
     if (!apiKey) {
-      apiKey = 'AIzaSyDiWitLY1kEwOPe1it8Lqs8zqIfDkNrZsk';
+      apiKey = 'AIzaSyBgY9ZasRs4u2g0NoUwdPPiA90uJtnA4FQ';
     }
 
     if (!apiKey || apiKey === "undefined" || apiKey === "") {
@@ -40,6 +40,98 @@ function getAiClient(): GoogleGenAI {
   return aiClient;
 }
 
+async function nativeGeminiRequest(params: {
+  model: string;
+  contents: any;
+  systemInstruction?: string;
+  responseMimeType?: string;
+  responseSchema?: any;
+}) {
+  let apiKey = '';
+
+  // Get the key
+  try {
+    if (typeof import.meta !== 'undefined' && (import.meta as any).env) {
+      apiKey = (import.meta as any).env.VITE_GEMINI_API_KEY || '';
+    }
+  } catch (e) {}
+
+  if (!apiKey) {
+    try {
+      if (typeof process !== 'undefined' && process.env) {
+        apiKey = (process.env as any).GEMINI_API_KEY || '';
+      }
+    } catch (e) {}
+  }
+
+  if (!apiKey) {
+    apiKey = 'AIzaSyBgY9ZasRs4u2g0NoUwdPPiA90uJtnA4FQ';
+  }
+
+  apiKey = apiKey.trim();
+
+  // Normalize contents to API format
+  let contentsArray: any[] = [];
+  if (typeof params.contents === 'string') {
+    contentsArray = [{ role: 'user', parts: [{ text: params.contents }] }];
+  } else if (Array.isArray(params.contents)) {
+    contentsArray = params.contents.map(c => {
+      if (typeof c === 'string') {
+        return { role: 'user', parts: [{ text: c }] };
+      }
+      return c;
+    });
+  } else if (params.contents && typeof params.contents === 'object') {
+    contentsArray = [params.contents];
+  }
+
+  // Double check that we map parts correctly
+  const payload: any = {
+    contents: contentsArray,
+  };
+
+  if (params.systemInstruction) {
+    payload.systemInstruction = {
+      parts: [{ text: params.systemInstruction }]
+    };
+  }
+
+  const generationConfig: any = {};
+  if (params.responseMimeType) {
+    generationConfig.responseMimeType = params.responseMimeType;
+  }
+  if (params.responseSchema) {
+    generationConfig.responseSchema = params.responseSchema;
+  }
+
+  if (Object.keys(generationConfig).length > 0) {
+    payload.generationConfig = generationConfig;
+  }
+
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/${params.model}:generateContent?key=${apiKey}`;
+
+  const response = await fetch(url, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(payload),
+  });
+
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}));
+    const rawMessage = errorData?.error?.message || response.statusText;
+    throw new Error(rawMessage || `HTTP error! status: ${response.status}`);
+  }
+
+  const data = await response.json();
+  const text = data?.candidates?.[0]?.content?.parts?.[0]?.text;
+  if (!text) {
+    throw new Error("Empty or invalid candidate response from Gemini API");
+  }
+  return text;
+}
+
 const model = "gemini-2.5-flash";
 
 export async function generatePracticeQuestions(subjectId: string, count: number = 5): Promise<Question[]> {
@@ -48,41 +140,37 @@ export async function generatePracticeQuestions(subjectId: string, count: number
   The output must be a structured JSON array.`;
 
   try {
-    const ai = getAiClient();
-    const response = await ai.models.generateContent({
+    const text = await nativeGeminiRequest({
       model,
       contents: prompt,
-      config: {
-        responseMimeType: "application/json",
-        responseSchema: {
-          type: Type.ARRAY,
-          items: {
-            type: Type.OBJECT,
-            properties: {
-              id: { type: Type.STRING },
-              subjectId: { type: Type.STRING },
-              question: { type: Type.STRING },
-              questionSi: { type: Type.STRING },
-              options: { 
-                type: Type.ARRAY, 
-                items: { type: Type.STRING } 
-              },
-              optionsSi: { 
-                type: Type.ARRAY, 
-                items: { type: Type.STRING } 
-              },
-              correctAnswer: { type: Type.INTEGER, description: "Index of the correct answer (0-3)" },
-              explanation: { type: Type.STRING },
-              explanationSi: { type: Type.STRING },
+      responseMimeType: "application/json",
+      responseSchema: {
+        type: Type.ARRAY,
+        items: {
+          type: Type.OBJECT,
+          properties: {
+            id: { type: Type.STRING },
+            subjectId: { type: Type.STRING },
+            question: { type: Type.STRING },
+            questionSi: { type: Type.STRING },
+            options: { 
+              type: Type.ARRAY, 
+              items: { type: Type.STRING } 
             },
-            required: ["id", "subjectId", "question", "questionSi", "options", "optionsSi", "correctAnswer", "explanation", "explanationSi"],
+            optionsSi: { 
+              type: Type.ARRAY, 
+              items: { type: Type.STRING } 
+            },
+            correctAnswer: { type: Type.INTEGER, description: "Index of the correct answer (0-3)" },
+            explanation: { type: Type.STRING },
+            explanationSi: { type: Type.STRING },
           },
-        },
-      },
+          required: ["id", "subjectId", "question", "questionSi", "options", "optionsSi", "correctAnswer", "explanation", "explanationSi"],
+        }
+      }
     });
 
-    if (!response.text) throw new Error("Empty response from AI");
-    return JSON.parse(response.text);
+    return JSON.parse(text);
   } catch (error) {
     console.error("Error generating questions:", error);
     throw error;
@@ -97,21 +185,17 @@ export async function getTutorResponse(message: string, subjectId?: SubjectId, h
   If asked a question in Sinhala, respond in Sinhala or a mix of both if appropriate.`;
 
   try {
-    const ai = getAiClient();
     const contents = history.length > 0 
       ? [...history, { role: 'user', parts: [{ text: message }] }] 
       : message;
 
-    const response = await ai.models.generateContent({
+    const text = await nativeGeminiRequest({
       model,
       contents,
-      config: {
-        systemInstruction,
-      },
+      systemInstruction,
     });
 
-    if (!response.text) throw new Error("Empty response from AI");
-    return response.text;
+    return text;
   } catch (error) {
     console.error("Error getting tutor response:", error);
     throw error;
@@ -126,29 +210,26 @@ export async function generatePersonalizedStudyPlan(performances: UserPerformanc
   Provide recommendations in both English and Sinhala.`;
 
   try {
-    const ai = getAiClient();
-    const response = await ai.models.generateContent({
+    const text = await nativeGeminiRequest({
       model,
       contents: prompt,
-      config: {
-        responseMimeType: "application/json",
-        responseSchema: {
-          type: Type.ARRAY,
-          items: {
-            type: Type.OBJECT,
-            properties: {
-              subjectId: { type: Type.STRING },
-              recommendation: { type: Type.STRING },
-              recommendationSi: { type: Type.STRING },
-              priority: { type: Type.STRING, enum: ["low", "medium", "high"] },
-            },
-            required: ["subjectId", "recommendation", "recommendationSi", "priority"],
+      responseMimeType: "application/json",
+      responseSchema: {
+        type: Type.ARRAY,
+        items: {
+          type: Type.OBJECT,
+          properties: {
+            subjectId: { type: Type.STRING },
+            recommendation: { type: Type.STRING },
+            recommendationSi: { type: Type.STRING },
+            priority: { type: Type.STRING, enum: ["low", "medium", "high"] },
           },
+          required: ["subjectId", "recommendation", "recommendationSi", "priority"],
         },
-      },
+      }
     });
 
-    return JSON.parse(response.text);
+    return JSON.parse(text);
   } catch (error) {
     console.error("Error generating study plan:", error);
     throw error;
