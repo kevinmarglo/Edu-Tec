@@ -17,6 +17,7 @@ import { cn } from './lib/utils';
 import SubjectList from './components/SubjectList';
 import SubjectView from './components/SubjectView';
 import Dashboard from './components/Dashboard';
+import TechnicalCollegeLogo from './components/TechnicalCollegeLogo';
 
 type View = 'landing' | 'subject' | 'dashboard' | 'profile';
 
@@ -62,12 +63,12 @@ export default function App() {
   return (
     <div className="flex flex-col md:flex-row min-h-screen bg-[#F1F5F9]">
       {/* Sidebar - Desktop */}
-      <aside className="hidden md:flex w-72 bg-white border-r-2 border-indigo-950 flex-col p-8 space-y-12">
-        <div className="flex items-center" onClick={() => setActiveView('landing')}>
-          <div className="w-12 h-12 bg-indigo-600 rounded-xl flex items-center justify-center text-white font-black text-2xl shadow-lg shadow-indigo-200">A</div>
+      <aside className="hidden md:flex w-72 bg-white border-r-2 border-indigo-950 flex-col p-8 space-y-8">
+        <div className="flex items-center cursor-pointer select-none" onClick={() => setActiveView('landing')}>
+          <TechnicalCollegeLogo className="w-12 h-12 shadow-lg" />
           <div className="ml-3">
             <h1 className="text-2xl font-black text-indigo-950 tracking-tighter leading-none">LANKAED</h1>
-            <p className="text-[10px] uppercase font-black text-indigo-500 tracking-widest mt-1">O/L AI Companion</p>
+            <p className="text-[10px] uppercase font-black text-rose-600 tracking-widest mt-1">O/L AI Companion</p>
           </div>
         </div>
         
@@ -99,21 +100,36 @@ export default function App() {
           </button>
         </nav>
 
-        <div className="p-5 bg-orange-50 border-2 border-indigo-950 rounded-2xl relative overflow-hidden group">
-          <div className="absolute top-0 right-0 w-16 h-16 bg-orange-200/20 rounded-full -mr-8 -mt-8" />
-          <p className="text-[10px] font-black text-orange-600 uppercase mb-2 tracking-widest">Exam Countdown</p>
-          <p className="text-sm font-black text-indigo-950">12 Days until Exam</p>
-          <div className="w-full h-3 bg-white border border-indigo-950 rounded-full mt-3 overflow-hidden">
-            <div className="w-3/4 h-full bg-orange-500" />
+        <div className="space-y-4">
+          <div className="p-5 bg-orange-50 border-2 border-indigo-950 rounded-2xl relative overflow-hidden group">
+            <div className="absolute top-0 right-0 w-16 h-16 bg-orange-200/20 rounded-full -mr-8 -mt-8" />
+            <p className="text-[10px] font-black text-orange-600 uppercase mb-2 tracking-widest">Exam Countdown</p>
+            <p className="text-sm font-black text-indigo-950">12 Days until Exam</p>
+            <div className="w-full h-3 bg-white border border-indigo-950 rounded-full mt-3 overflow-hidden">
+              <div className="w-3/4 h-full bg-orange-500" />
+            </div>
+          </div>
+
+          {/* Creator Credit Badge */}
+          <div className="p-4 bg-rose-50 border-2 border-indigo-950 rounded-2xl flex items-center gap-3 shadow-[3px_3px_0px_0px_rgba(30,27,75,1)]">
+            <TechnicalCollegeLogo className="w-10 h-10 shadow-sm" />
+            <div>
+              <p className="text-[9px] font-black text-rose-700 uppercase tracking-widest">Created By</p>
+              <p className="text-xs font-black text-indigo-950">ICT - 4</p>
+              <p className="text-[9px] font-black text-slate-500 leading-none mt-0.5">Technical College Nuwara Eliya</p>
+            </div>
           </div>
         </div>
       </aside>
 
       {/* Mobile Header */}
       <div className="md:hidden flex items-center justify-between p-4 bg-white border-b-2 border-indigo-950">
-        <div className="flex items-center" onClick={() => setActiveView('landing')}>
-          <div className="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center text-white font-black text-lg">A</div>
-          <span className="ml-2 font-black text-indigo-950 tracking-tighter">LANKAED</span>
+        <div className="flex items-center cursor-pointer select-none" onClick={() => setActiveView('landing')}>
+          <TechnicalCollegeLogo className="w-8 h-8 rounded-lg" />
+          <div className="ml-2">
+            <span className="font-black text-indigo-950 tracking-tighter leading-none block">LANKAED</span>
+            <span className="text-[7px] font-black text-rose-600 uppercase tracking-wider block mt-0.5">ICT - 4 (TC Nuwara Eliya)</span>
+          </div>
         </div>
         <button onClick={() => setIsSidebarOpen(true)} className="p-2 border-2 border-indigo-950 rounded-lg bg-indigo-50">
           <Menu size={20} />
@@ -207,8 +223,11 @@ export default function App() {
             >
               <div className="flex justify-between items-center mb-12">
                 <div className="flex items-center">
-                  <div className="w-10 h-10 bg-indigo-600 rounded-lg flex items-center justify-center text-white font-black">A</div>
-                  <span className="ml-2 font-black text-indigo-950">LANKAED</span>
+                  <TechnicalCollegeLogo className="w-10 h-10 rounded-lg" />
+                  <div className="ml-2">
+                    <span className="font-black text-indigo-950 block leading-none">LANKAED</span>
+                    <span className="text-[8px] font-black text-rose-600 uppercase tracking-widest mt-1 block">ICT - 4 Creator</span>
+                  </div>
                 </div>
                 <button onClick={() => setIsSidebarOpen(false)} className="p-2 border-2 border-indigo-950 rounded-lg">
                   <X size={20} />
@@ -228,6 +247,16 @@ export default function App() {
                   <LayoutDashboard size={20} /> ප්රගතිය
                 </button>
               </nav>
+
+              {/* Mobile overlay creator info */}
+              <div className="mt-8 p-4 bg-rose-50 border-2 border-indigo-950 rounded-2xl flex items-center gap-3">
+                <TechnicalCollegeLogo className="w-10 h-10 shadow-sm" />
+                <div>
+                  <p className="text-[9px] font-black text-rose-700 uppercase tracking-widest">Created By</p>
+                  <p className="text-xs font-black text-indigo-950">ICT - 4</p>
+                  <p className="text-[9px] font-black text-slate-500 leading-none mt-0.5">Technical College Nuwara Eliya</p>
+                </div>
+              </div>
             </motion.div>
           </>
         )}

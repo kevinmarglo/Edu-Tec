@@ -7,7 +7,19 @@ export type SubjectId =
   | 'buddhism' 
   | 'commercial' 
   | 'ict' 
-  | 'geography';
+  | 'geography'
+  | 'citizenship'
+  | 'entrepreneurship'
+  | 'art'
+  | 'music'
+  | 'dancing'
+  | 'drama'
+  | 'health'
+  | 'media'
+  | 'agriculture'
+  | 'home_economics'
+  | 'tamil'
+  | 'literature';
 
 export interface Subject {
   id: SubjectId;
