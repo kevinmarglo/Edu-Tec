@@ -5,9 +5,35 @@ let aiClient: GoogleGenAI | null = null;
 
 function getAiClient(): GoogleGenAI {
   if (!aiClient) {
-    const apiKey = process.env.GEMINI_API_KEY || (import.meta as any).env.VITE_GEMINI_API_KEY || 'AIzaSyDiWitLY1kEwOPe1it8Lqs8zqIfDkNrZsk';
+    let apiKey = '';
+
+    // Portably check import.meta.env first (Vite standard for client-side)
+    try {
+      if (typeof import.meta !== 'undefined' && (import.meta as any).env) {
+        apiKey = (import.meta as any).env.VITE_GEMINI_API_KEY || '';
+      }
+    } catch (e) {
+      // Ignore
+    }
+
+    // Safely fallback to Node/Server-side process.env if available (safeguarded against browser ReferenceErrors)
+    if (!apiKey) {
+      try {
+        if (typeof process !== 'undefined' && process.env) {
+          apiKey = (process.env as any).GEMINI_API_KEY || '';
+        }
+      } catch (e) {
+        // Ignore ReferenceError in browser
+      }
+    }
+
+    // Direct fallback key as requested to ensure it always works
+    if (!apiKey) {
+      apiKey = 'AIzaSyDiWitLY1kEwOPe1it8Lqs8zqIfDkNrZsk';
+    }
+
     if (!apiKey || apiKey === "undefined" || apiKey === "") {
-       throw new Error("GEMINI_API_KEY is missing. In AI Studio, please ensure your API key is associated with a project in the Secrets/Settings tab. For external deployments (Vercel/Netlify), add GEMINI_API_KEY to your environment variables.");
+       throw new Error("GEMINI_API_KEY is missing. In AI Studio, please ensure your API key is associated with a project in the Secrets/Settings tab. For external deployments (Vercel/Netlify), add VITE_GEMINI_API_KEY to your environment variables.");
     }
     aiClient = new GoogleGenAI({ apiKey });
   }
