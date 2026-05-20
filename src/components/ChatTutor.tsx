@@ -55,9 +55,18 @@ export default function ChatTutor({ subject }: ChatTutorProps) {
       const errorMessage = error?.message || "";
       let helpText = "I'm sorry, I encountered an error. Please try again soon.";
       
-      if (errorMessage.toLowerCase().includes("api_key") || errorMessage.toLowerCase().includes("key") || errorMessage.toLowerCase().includes("api key") || errorMessage.toLowerCase().includes("forbidden") || errorMessage.toLowerCase().includes("unauthorized")) {
+      if (errorMessage.toLowerCase().includes("leaked")) {
+        helpText = `🚨 **Security Alert & Key Deactivated / ආරක්ෂක අනතුරු ඇඟවීමයි**:
+Google has flagged the configured Gemini API key as **leaked** (exposed publicly) and has immediately deactivated it for your security.
+
+**How to make it work (විසඳුම):**
+1. Go to **[Google AI Studio](https://aistudio.google.com/)** and create a **new API key**.
+2. **Never** share, commit to GitHub, or paste this new key publicly in any chats.
+3. If this app is on **Netlify**: Go to your Netlify dashboard -> **Site configuration** -> **Environment variables**. Edit or add \`VITE_GEMINI_API_KEY\` with your **new secure key**.
+4. Go to the **Deploys** tab on Netlify, click **Trigger deploy** and choose **Clear cache and deploy site** to build the applet with the newly created key!`;
+      } else if (errorMessage.toLowerCase().includes("api_key") || errorMessage.toLowerCase().includes("key") || errorMessage.toLowerCase().includes("api key") || errorMessage.toLowerCase().includes("forbidden") || errorMessage.toLowerCase().includes("unauthorized")) {
         helpText = `**Configuration Required / සැකසුම් අවශ්‍යයි**:
-Your Gemini API Key seems to be missing, restricted, or invalid. 
+Your Gemini API Key is missing, restricted, or invalid. 
 
 If you have deployed this project to **Netlify**, please follow these steps to make it work:
 1. Go to your **Netlify Dashboard** for this site.

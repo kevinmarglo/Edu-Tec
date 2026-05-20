@@ -47,8 +47,15 @@ export default function PracticeQuestions({ subject, isMock = false, onComplete 
       setScore(0);
       setIsAnswered(false);
       setSelectedOption(null);
-    } catch (err) {
-      setError('Failed to load questions. Please try again.');
+    } catch (err: any) {
+      const errMsg = err?.message || '';
+      if (errMsg.toLowerCase().includes("leaked")) {
+        setError('Your Gemini API key has been flagged as leaked by Google and deactivated immediately for security. Please generate a new key in Google AI Studio and update your VITE_GEMINI_API_KEY environment variable, then clean-redeploy your site.');
+      } else if (errMsg.toLowerCase().includes("api_key") || errMsg.toLowerCase().includes("key") || errMsg.toLowerCase().includes("api key") || errMsg.toLowerCase().includes("forbidden") || errMsg.toLowerCase().includes("unauthorized")) {
+        setError('Your Gemini API Key is missing, restricted, or invalid. Please check your VITE_GEMINI_API_KEY.');
+      } else {
+        setError(`Failed to load questions: ${errMsg || 'Connection Error'}`);
+      }
     } finally {
       setIsLoading(false);
     }

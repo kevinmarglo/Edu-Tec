@@ -110,26 +110,40 @@ async function nativeGeminiRequest(params: {
 
   const url = `https://generativelanguage.googleapis.com/v1beta/models/${params.model}:generateContent?key=${apiKey}`;
 
-  const response = await fetch(url, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify(payload),
-  });
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 15000);
 
-  if (!response.ok) {
-    const errorData = await response.json().catch(() => ({}));
-    const rawMessage = errorData?.error?.message || response.statusText;
-    throw new Error(rawMessage || `HTTP error! status: ${response.status}`);
-  }
+  try {
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(payload),
+      signal: controller.signal,
+    });
 
-  const data = await response.json();
-  const text = data?.candidates?.[0]?.content?.parts?.[0]?.text;
-  if (!text) {
-    throw new Error("Empty or invalid candidate response from Gemini API");
+    clearTimeout(timeoutId);
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      const rawMessage = errorData?.error?.message || response.statusText;
+      throw new Error(rawMessage || `HTTP error! status: ${response.status}`);
+    }
+
+    const data = await response.json();
+    const text = data?.candidates?.[0]?.content?.parts?.[0]?.text;
+    if (!text) {
+      throw new Error("Empty or invalid candidate response from Gemini API");
+    }
+    return text;
+  } catch (error: any) {
+    clearTimeout(timeoutId);
+    if (error.name === 'AbortError') {
+      throw new Error("Request timed out after 15 seconds. This can happen if the API Key is restricted, model service is unreachable, or your internet is unstable.");
+    }
+    throw error;
   }
-  return text;
 }
 
 const model = "gemini-2.5-flash";

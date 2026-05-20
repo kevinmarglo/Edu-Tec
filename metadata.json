@@ -2,5 +2,5 @@
   "name": "LankaEducate: O/L AI Tutor",
   "description": "A comprehensive AI-powered learning platform for Sri Lankan O/L students, featuring personalized study plans, mock exams, and multi-subject support in Sinhala and English.",
   "requestFramePermissions": [],
-  "majorCapabilities": []
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }

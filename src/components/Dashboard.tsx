@@ -23,6 +23,7 @@ interface DashboardProps {
 export default function Dashboard({ performances }: DashboardProps) {
   const [plans, setPlans] = useState<StudyPlan[]>([]);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (performances.length > 0) {
@@ -32,11 +33,20 @@ export default function Dashboard({ performances }: DashboardProps) {
 
   const loadStudyPlan = async () => {
     setLoading(true);
+    setError(null);
     try {
       const p = await generatePersonalizedStudyPlan(performances);
       setPlans(p);
-    } catch (error) {
-      console.error(error);
+    } catch (err: any) {
+      console.error(err);
+      const errMsg = err?.message || '';
+      if (errMsg.toLowerCase().includes("leaked")) {
+        setError('Your Gemini API key has been flagged as leaked by Google and deactivated immediately for security. Please generate a new key in Google AI Studio and configure VITE_GEMINI_API_KEY with it.');
+      } else if (errMsg.toLowerCase().includes("api_key") || errMsg.toLowerCase().includes("key") || errMsg.toLowerCase().includes("api key") || errMsg.toLowerCase().includes("forbidden") || errMsg.toLowerCase().includes("unauthorized")) {
+        setError('Your Gemini API Key is missing, restricted, or invalid. Please check configured VITE_GEMINI_API_KEY environment variable.');
+      } else {
+        setError(`Failed to load study plan: ${errMsg || 'Connection Error'}`);
+      }
     } finally {
       setLoading(false);
     }
@@ -99,7 +109,19 @@ export default function Dashboard({ performances }: DashboardProps) {
           </div>
 
           <div className="space-y-4">
-            {performances.length === 0 ? (
+            {error ? (
+              <div className="bg-red-50 border-2 border-red-200 p-6 rounded-3xl text-left">
+                <AlertCircle size={24} className="text-red-500 mb-2" />
+                <h4 className="font-black text-red-950 mb-1 uppercase tracking-tight text-sm">AI Study Plan Generation Failed</h4>
+                <p className="text-slate-600 text-xs font-bold leading-relaxed">{error}</p>
+                <button 
+                  onClick={loadStudyPlan}
+                  className="mt-4 px-4 py-2 bg-red-100 hover:bg-red-200 border border-red-300 text-red-800 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all"
+                >
+                  Retry Plan Generation
+                </button>
+              </div>
+            ) : performances.length === 0 ? (
               <div className="bg-white border-2 border-indigo-950 border-dashed p-12 rounded-3xl text-center">
                 <AlertCircle size={40} className="text-slate-200 mx-auto mb-4" />
                 <h4 className="font-black text-indigo-950 mb-2 uppercase tracking-tight">No Data Detected</h4>
