@@ -30,7 +30,7 @@ export default function ChatTutor({ subject }: ChatTutorProps) {
     if (scrollRef.current) {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
     }
-  }, [messages]);
+  }, [messages, isLoading]);
 
   const handleSend = async () => {
     if (!input.trim() || isLoading) return;
@@ -41,8 +41,12 @@ export default function ChatTutor({ subject }: ChatTutorProps) {
     setIsLoading(true);
 
     try {
-      // We pass the history but remove the first greeting for brevity in context
-      const history = messages.slice(1);
+      // Map history for the API (only role and parts)
+      const history = messages.slice(1).map(m => ({
+        role: m.role,
+        parts: m.parts
+      }));
+
       const responseText = await getTutorResponse(input, subject.id, history);
       
       setMessages(prev => [...prev, { role: 'model', parts: [{ text: responseText }] }]);
@@ -72,7 +76,7 @@ export default function ChatTutor({ subject }: ChatTutorProps) {
         </div>
       </div>
 
-      {/* Messages Area */}
+      {/* Messages Area - Bento Style */}
       <div 
         ref={scrollRef}
         className="flex-1 overflow-y-auto p-6 md:p-10 space-y-8 scroll-smooth"

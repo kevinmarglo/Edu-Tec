@@ -72,9 +72,13 @@ export async function getTutorResponse(message: string, subjectId?: SubjectId, h
 
   try {
     const ai = getAiClient();
+    const contents = history.length > 0 
+      ? [...history, { role: 'user', parts: [{ text: message }] }] 
+      : message;
+
     const response = await ai.models.generateContent({
       model,
-      contents: history.length > 0 ? [...history, { role: 'user', parts: [{ text: message }] }] : message,
+      contents,
       config: {
         systemInstruction,
       },
