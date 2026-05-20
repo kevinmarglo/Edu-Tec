@@ -5,7 +5,7 @@ let aiClient: GoogleGenAI | null = null;
 
 function getAiClient(): GoogleGenAI {
   if (!aiClient) {
-    const apiKey = process.env.GEMINI_API_KEY || (import.meta as any).env.VITE_GEMINI_API_KEY;
+    const apiKey = process.env.GEMINI_API_KEY || (import.meta as any).env.VITE_GEMINI_API_KEY || 'AIzaSyDiWitLY1kEwOPe1it8Lqs8zqIfDkNrZsk';
     if (!apiKey || apiKey === "undefined" || apiKey === "") {
        throw new Error("GEMINI_API_KEY is missing. In AI Studio, please ensure your API key is associated with a project in the Secrets/Settings tab. For external deployments (Vercel/Netlify), add GEMINI_API_KEY to your environment variables.");
     }
