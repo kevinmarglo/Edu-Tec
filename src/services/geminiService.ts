@@ -40,7 +40,7 @@ function getAiClient(): GoogleGenAI {
   return aiClient;
 }
 
-const model = "gemini-3-flash-preview";
+const model = "gemini-2.5-flash";
 
 export async function generatePracticeQuestions(subjectId: string, count: number = 5): Promise<Question[]> {
   const prompt = `Generate ${count} multiple-choice questions for the G.C.E. Ordinary Level (O/L) examination in Sri Lanka for the subject: ${subjectId}. 

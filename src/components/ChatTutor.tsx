@@ -50,8 +50,28 @@ export default function ChatTutor({ subject }: ChatTutorProps) {
       const responseText = await getTutorResponse(input, subject.id, history);
       
       setMessages(prev => [...prev, { role: 'model', parts: [{ text: responseText }] }]);
-    } catch (error) {
-      setMessages(prev => [...prev, { role: 'model', parts: [{ text: "I'm sorry, I encountered an error. Please try again soon." }] }]);
+    } catch (error: any) {
+      console.error("Chat error:", error);
+      const errorMessage = error?.message || "";
+      let helpText = "I'm sorry, I encountered an error. Please try again soon.";
+      
+      if (errorMessage.toLowerCase().includes("api_key") || errorMessage.toLowerCase().includes("key") || errorMessage.toLowerCase().includes("api key") || errorMessage.toLowerCase().includes("forbidden") || errorMessage.toLowerCase().includes("unauthorized")) {
+        helpText = `**Configuration Required / සැකසුම් අවශ්‍යයි**:
+Your Gemini API Key seems to be missing, restricted, or invalid. 
+
+If you have deployed this project to **Netlify**, please follow these steps to make it work:
+1. Go to your **Netlify Dashboard** for this site.
+2. Navigate to **Site configuration > Environment variables**.
+3. Add a new variable named \`VITE_GEMINI_API_KEY\` and paste your Gemini API Key as the value.
+4. **Trigger a deploy / clean redeploy** of the site from the **Deploys** tab so Vite can bundle the key for the web browser.`;
+      } else {
+        helpText = `I'm sorry, I encountered an error: \`${errorMessage || "CORS or Network Restriction"}\`. 
+        
+If you are running on **Netlify**, please ensure:
+1. You have set up the \`VITE_GEMINI_API_KEY\` environment variable in your Netlify dashboard.
+2. The site was built and redeployed after adding the environment variable.`;
+      }
+      setMessages(prev => [...prev, { role: 'model', parts: [{ text: helpText }] }]);
     } finally {
       setIsLoading(false);
     }
