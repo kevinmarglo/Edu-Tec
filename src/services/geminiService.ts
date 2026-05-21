@@ -108,45 +108,70 @@ async function nativeGeminiRequest(params: {
     payload.generationConfig = generationConfig;
   }
 
-  const url = `https://generativelanguage.googleapis.com/v1beta/models/${params.model}:generateContent?key=${apiKey}`;
+  const runRequest = async (modelName: string): Promise<string> => {
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${apiKey}`;
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 15000);
 
-  const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), 15000);
+    try {
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(payload),
+        signal: controller.signal,
+      });
+
+      clearTimeout(timeoutId);
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        const rawMessage = errorData?.error?.message || response.statusText;
+        const status = response.status;
+        throw { message: rawMessage || `HTTP error! status: ${response.status}`, status };
+      }
+
+      const data = await response.json();
+      const text = data?.candidates?.[0]?.content?.parts?.[0]?.text;
+      if (!text) {
+        throw { message: "Empty or invalid candidate response from Gemini API", status: 500 };
+      }
+      return text;
+    } catch (error: any) {
+      clearTimeout(timeoutId);
+      if (error.name === 'AbortError') {
+        throw { message: "Request timed out after 15 seconds. This can happen if the API Key is restricted, model service is unreachable, or your internet is unstable.", status: 408 };
+      }
+      throw error;
+    }
+  };
 
   try {
-    const response = await fetch(url, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(payload),
-      signal: controller.signal,
-    });
-
-    clearTimeout(timeoutId);
-
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      const rawMessage = errorData?.error?.message || response.statusText;
-      throw new Error(rawMessage || `HTTP error! status: ${response.status}`);
-    }
-
-    const data = await response.json();
-    const text = data?.candidates?.[0]?.content?.parts?.[0]?.text;
-    if (!text) {
-      throw new Error("Empty or invalid candidate response from Gemini API");
-    }
-    return text;
+    return await runRequest(params.model);
   } catch (error: any) {
-    clearTimeout(timeoutId);
-    if (error.name === 'AbortError') {
-      throw new Error("Request timed out after 15 seconds. This can happen if the API Key is restricted, model service is unreachable, or your internet is unstable.");
+    // If we hit a daily or minute quota exception (429) or other rate limits, try fallback models!
+    const isQuotaOrLimitError = error?.status === 429 || 
+                                (error?.message && error.message.toLowerCase().includes("quota")) || 
+                                (error?.message && error.message.toLowerCase().includes("limit"));
+    
+    if (isQuotaOrLimitError) {
+      const fallbackModel = (params.model === "gemini-3.5-flash") ? "gemini-2.5-flash" : "gemini-3.5-flash";
+      console.warn(`Primary model ${params.model} hit quota limits. Attempting fallback to ${fallbackModel}...`);
+      try {
+        return await runRequest(fallbackModel);
+      } catch (fallbackError: any) {
+        const primaryMsg = error.message || "Quota/rate limit exceeded";
+        const fallbackMsg = fallbackError.message || "Fallback error";
+        throw new Error(`${primaryMsg} (Fallback model ${fallbackModel} also failed: ${fallbackMsg})`);
+      }
     }
-    throw error;
+    
+    throw new Error(error.message || error);
   }
 }
 
-const model = "gemini-2.5-flash";
+const model = "gemini-3.5-flash";
 
 export async function generatePracticeQuestions(subjectId: string, count: number = 5): Promise<Question[]> {
   const prompt = `Generate ${count} multiple-choice questions for the G.C.E. Ordinary Level (O/L) examination in Sri Lanka for the subject: ${subjectId}. 
