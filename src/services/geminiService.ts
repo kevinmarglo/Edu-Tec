@@ -29,7 +29,7 @@ function getAiClient(): GoogleGenAI {
 
     // Direct fallback key as requested to ensure it always works
     if (!apiKey) {
-      apiKey = 'AIzaSyD7giNNGRNSyrWIxYR9186jgulxI4CNGKo';
+      apiKey = 'AIzaSyBagEUT0YKxGqnd5r-hAMtwyZdW5fyEmrw';
     }
 
     if (!apiKey || apiKey === "undefined" || apiKey === "") {
@@ -65,7 +65,7 @@ async function nativeGeminiRequest(params: {
   }
 
   if (!apiKey) {
-    apiKey = 'AIzaSyD7giNNGRNSyrWIxYR9186jgulxI4CNGKo';
+    apiKey = 'AIzaSyBagEUT0YKxGqnd5r-hAMtwyZdW5fyEmrw';
   }
 
   apiKey = apiKey.trim();
